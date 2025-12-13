@@ -266,6 +266,15 @@ confidence_threshold = st.sidebar.slider(
     help="Minimum confidence score for object detection"
 )
 
+iou_threshold = st.sidebar.slider(
+    "NMS IoU Threshold",
+    min_value=0.1,
+    max_value=1.0,
+    value=0.45,
+    step=0.05,
+    help="Lower IoU = more boxes, Higher IoU = fewer boxes"
+)
+
 # Input type selection
 input_type = st.sidebar.radio(
     "Select Input Type",
@@ -274,7 +283,7 @@ input_type = st.sidebar.radio(
 )
 
 # Function to process image
-def process_image(image, model, conf_threshold):
+def process_image(image, model, conf_threshold, iou_threshold):
     """Process image and return annotated image with detections"""
     try:
         # Convert PIL Image to RGB mode (handles all formats)
@@ -294,13 +303,14 @@ def process_image(image, model, conf_threshold):
         elif img_array.shape[-1] > 4:  # More than 4 channels
             img_array = img_array[:, :, :3]  # Take only first 3 channels
         
-        # Run inference
+         # Run inference
         results = model.predict(
             source=img_array,
             conf=conf_threshold,
+            iou=iou_threshold,
+            max_det=300,
             show=False
         )
-        
         # Get annotated image
         annotated_img = results[0].plot()
         
@@ -401,7 +411,7 @@ if input_type == "Image":
             with st.spinner("Running AI detection analysis..."):
                 # Process image
                 annotated_img, detections = process_image(
-                    image, model, confidence_threshold
+                    image, model, confidence_threshold, iou_threshold
                 )
                 
                 if annotated_img is not None:
@@ -685,4 +695,5 @@ with st.sidebar.expander("💡 Tips for Best Results"):
     - Adjust confidence threshold for precision
     - Process videos in smaller segments for speed
     - Ensure good image quality and clarity
+
     """)
